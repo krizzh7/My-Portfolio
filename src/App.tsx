@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, Menu, X } from 'lucide-react'
 import FlipIntro from './components/FlipIntro'
+import HoneycombTrail from './components/HoneycombTrail'
 import LoadingScreen from './components/LoadingScreen'
 import Sections from './components/Sections'
 
@@ -41,56 +42,136 @@ function Navigation() {
 }
 
 function CustomCursor() {
-  const ink = useRef<HTMLDivElement>(null)
-  const drag = useRef<HTMLDivElement>(null)
+  const dot = useRef<HTMLDivElement>(null)
+  const follow = useRef<HTMLDivElement>(null)
+  const label = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)')
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     if (!finePointer.matches || reducedMotion.matches) return
 
-    let x = window.innerWidth / 2
-    let y = window.innerHeight / 2
+    const body = document.body
+    const INTERACTIVE = 'a, button, [role="button"], [data-cursor], .reel-card, .reel-strip'
+    const LABELS: Array<[string, string]> = [
+      ['.contact-cta', 'SAY HI'],
+      ['.run-projects-btn', 'PLAY'],
+      ['.reel-card', 'VIEW'],
+      ['.reel-title', 'GO'],
+      ['.reel-detail-next', 'NEXT'],
+      ['.reel-footer-right', 'NEXT'],
+      ['.reel-detail-back', 'BACK'],
+      ['.reel-bar-return', 'BACK'],
+      ['.reel-strip', 'DRAG'],
+      ['a[href^="mailto"]', 'MAIL'],
+      ['a[href^="http"]', 'OPEN'],
+    ]
+
+    let targetX = 0
+    let targetY = 0
+    let ringX = 0
+    let ringY = 0
+    let started = false
     let frame = 0
-    const move = (event: PointerEvent) => {
-      document.body.classList.add('cursor-visible')
-      x = event.clientX
-      y = event.clientY
-      const target = event.target as Element | null
-      if (target) {
-        document.body.classList.toggle('cursor-hover', Boolean(target.closest('a, button, [role="button"]')))
-      }
-      if (frame) return
-      frame = window.requestAnimationFrame(() => {
-        frame = 0
-        if (ink.current) ink.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
-        if (drag.current) drag.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
-      })
+    let hovering = false
+    let currentLabel = ''
+
+    const paintDot = () => {
+      if (dot.current) dot.current.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`
     }
-    const down = () => document.body.classList.add('cursor-pressed')
-    const up = () => document.body.classList.remove('cursor-pressed')
-    const enter = () => document.body.classList.add('cursor-visible')
-    const leave = () => document.body.classList.remove('cursor-visible', 'cursor-hover')
+    const paintRing = () => {
+      if (follow.current) follow.current.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
+    }
+    const tick = () => {
+      ringX += (targetX - ringX) * 0.2
+      ringY += (targetY - ringY) * 0.2
+      paintRing()
+      if (Math.abs(targetX - ringX) + Math.abs(targetY - ringY) > 0.15) {
+        frame = window.requestAnimationFrame(tick)
+      } else {
+        ringX = targetX
+        ringY = targetY
+        paintRing()
+        frame = 0
+      }
+    }
+    const start = () => {
+      if (!frame) frame = window.requestAnimationFrame(tick)
+    }
+
+    const resolve = (node: EventTarget | null) => {
+      if (!(node instanceof Element)) return { hovering: false, label: '' }
+      const el = node.closest(INTERACTIVE)
+      if (!el) return { hovering: false, label: '' }
+      const custom = el.getAttribute('data-cursor')
+      if (custom) return { hovering: true, label: custom.toUpperCase() }
+      for (const [selector, text] of LABELS) {
+        if (el.matches(selector)) return { hovering: true, label: text }
+      }
+      return { hovering: true, label: '' }
+    }
+
+    const move = (event: PointerEvent) => {
+      targetX = event.clientX
+      targetY = event.clientY
+      if (!started) {
+        started = true
+        ringX = targetX
+        ringY = targetY
+        paintRing()
+      }
+      paintDot()
+      body.classList.add('cursor-active', 'cursor-visible')
+
+      const next = resolve(event.target)
+      if (next.hovering !== hovering || next.label !== currentLabel) {
+        hovering = next.hovering
+        currentLabel = next.label
+        body.classList.toggle('cursor-hover', hovering)
+        body.classList.toggle('cursor-has-label', Boolean(currentLabel))
+        if (label.current) label.current.textContent = currentLabel
+      }
+      start()
+    }
+    const down = () => body.classList.add('cursor-pressed')
+    const up = () => body.classList.remove('cursor-pressed')
+    const enter = () => {
+      if (started) body.classList.add('cursor-visible')
+    }
+    const leave = () => body.classList.remove('cursor-visible', 'cursor-hover', 'cursor-has-label', 'cursor-pressed')
+    const visibility = () => {
+      if (document.hidden) leave()
+    }
+
     window.addEventListener('pointermove', move, { passive: true })
     window.addEventListener('pointerdown', down)
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', up)
+    window.addEventListener('blur', leave)
     document.addEventListener('pointerenter', enter)
     document.addEventListener('pointerleave', leave)
+    document.addEventListener('visibilitychange', visibility)
 
     return () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerdown', down)
       window.removeEventListener('pointerup', up)
       window.removeEventListener('pointercancel', up)
+      window.removeEventListener('blur', leave)
       document.removeEventListener('pointerenter', enter)
       document.removeEventListener('pointerleave', leave)
+      document.removeEventListener('visibilitychange', visibility)
       window.cancelAnimationFrame(frame)
-      document.body.classList.remove('cursor-visible', 'cursor-pressed', 'cursor-hover')
+      body.classList.remove('cursor-active', 'cursor-visible', 'cursor-pressed', 'cursor-hover', 'cursor-has-label')
     }
   }, [])
 
-  return <><div className="cursor-drag" ref={drag} aria-hidden="true"/><div className="cursor-ink" ref={ink} aria-hidden="true"/></>
+  return <>
+    <div className="cursor-follow" ref={follow} aria-hidden="true">
+      <div className="cursor-ring"><span className="cursor-label" ref={label}/></div>
+    </div>
+    <div className="cursor-dot" ref={dot} aria-hidden="true"/>
+  </>
 }
 
 export default function App() {
@@ -128,5 +209,5 @@ export default function App() {
       document.documentElement.classList.remove('motion-ready', 'boot-lock')
     }
   }, [])
-  return <><LoadingScreen active={loading}/><div className="site-content" aria-hidden={loading}><Navigation/><FlipIntro loading={loading}/><Sections/><CustomCursor/></div></>
+  return <><LoadingScreen active={loading}/><div className="site-content" aria-hidden={loading}><Navigation/><FlipIntro loading={loading}/><Sections/><CustomCursor/></div><HoneycombTrail/></>
 }

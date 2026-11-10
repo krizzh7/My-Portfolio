@@ -72,7 +72,7 @@ export const projects = [
     image: '/projects/bloodarchive.png',
     media: [{ src: '/projects/bloodarchive.png', alt: 'The Blood Archive Chainsaw Man fanpage hero experience', caption: 'ENTRY VIEW / CHARACTER-FOCUSED FAN EXPERIENCE' }],
     tags: ['Fan project', 'Character-focused', 'Immersive browsing'],
-    theme: 'bloodarchive', type: 'blood', repo: 'https://github.com/krizzh7/myfanpage-csm', live: 'https://thebloodarchive.netlify.app/', note: 'A fan-made love letter. Official affiliation: none. Enthusiasm: not subtle.',
+    theme: 'bloodarchive', type: 'blood', repo: 'https://github.com/krizzh7/myfanpage-csm', live: 'https://myfanpage-csm.vercel.app/', note: 'A fan-made love letter. Official affiliation: none. Enthusiasm: not subtle.',
   },
 ]
 

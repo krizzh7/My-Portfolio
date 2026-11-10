@@ -117,7 +117,7 @@ All project visuals are stored locally in `public/projects/`. No stock imagery i
 | 01 | Multi-Gas Sentinel | IoT & Industrial Safety | `multigas.png` | [GitHub](https://github.com/krizzh7/Multi-Gas-Detector) |
 | 02 | Price Pilot | E-Commerce Intelligence | `pricepilot.png` | [GitHub](https://github.com/krizzh7/PricePilot) |
 | 03 | Cine Pulse | Media Platform | `cinepulse.png` | [GitHub](https://github.com/krizzh7/MovieListWebApp) |
-| 04 | The Blood Archive | Creative Fan Experience | `bloodarchive.png` | [GitHub](https://github.com/krizzh7/myfanpage-csm) · [Live](https://myfanpage-csm.vercel.app/) |
+| 04 | The Blood Archive | Creative Fan Experience | `bloodarchive.png` | [GitHub](https://github.com/krizzh7/myfanpage-csm) · [Live](https://thebloodarchive.vercel.app/) |
 
 The portfolio data includes four real projects, so the reel counter reads `01 / 04`. If you want a three-project version, remove the fourth object from `src/data/portfolio.ts`; every counter, title, and navigation state updates automatically.
 
